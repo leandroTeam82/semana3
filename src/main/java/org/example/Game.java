@@ -12,44 +12,60 @@ import java.io.IOException;
 
 public class Game {
 
-    private int x = 10;
-    private int y = 10;
+    private Screen screen;
+    private Arena arena;
 
-    public void run(){
+    public void run() {
         try {
-            draw();
+
+            TerminalSize terminalSize = new TerminalSize(50, 30);
+            DefaultTerminalFactory terminalFactory = new DefaultTerminalFactory().setInitialTerminalSize(terminalSize);
+            Terminal terminal = terminalFactory.createTerminal();
+
+            screen = new TerminalScreen(terminal);
+            screen.setCursorPosition(null);
+            screen.startScreen();
+            screen.doResizeIfNecessary();
+
+
+            arena = new Arena(10, 10);
+
+
+            while (true) {
+                draw();
+
+                KeyStroke key = screen.readInput();
+                if (key != null) {
+
+                    processKey(key);
+
+                    if (key.getCharacter() != null && key.getCharacter() == 'q') {
+                        terminal.close();
+                        break;
+                    }
+                }
+            }
 
         } catch (IOException e) {
-
             System.err.println("Erro ao desenhar no terminal: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private void draw() throws IOException {
-
-
-            TerminalSize terminalSize = new TerminalSize(40, 20);
-            DefaultTerminalFactory terminalFactory = new DefaultTerminalFactory().setInitialTerminalSize(terminalSize);
-            Terminal terminal = terminalFactory.createTerminal();
-
-            Screen screen = new TerminalScreen(terminal);
-            screen.setCursorPosition(null);
-            screen.startScreen();
-            screen.doResizeIfNecessary();
-
-        KeyStroke key = screen.readInput();
-        processKey(key);
-
-            screen.clear();
-            screen.setCharacter(x, y, TextCharacter.fromCharacter(key.getCharacter())
-                    [0]);
-            screen.refresh();
-
-
-    }
-
     private void processKey(KeyStroke key) {
-        System.out.println(key);
+        arena.processKey(key);
     }
+
+    private void draw() throws IOException {
+        screen.clear();
+        arena.draw(screen.newTextGraphics());
+        screen.refresh();
+    }
+
+    private void moveHero(Position position) {
+        arena.moveHero(position);
+    }
+
+
+
 }
